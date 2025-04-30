@@ -1,0 +1,53 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           Int           @id @default(autoincrement())
+  email        String        @unique
+  name         String
+  hashedPassword String
+  role         Role
+  messages     Message[]
+  coursesOwned Course[]      @relation("CourseOwner")
+  enrollments  Enrollment[] 
+}
+
+model Course {
+  id           Int           @id @default(autoincrement())
+  title        String
+  owner        User          @relation("CourseOwner", fields: [ownerId], references: [id])
+  ownerId      Int
+  messages     Message[]
+  enrollments  Enrollment[]
+}
+
+model Enrollment {
+  id           Int       @id @default(autoincrement())
+  user         User      @relation(fields: [userId], references: [id])
+  userId       Int
+  course       Course    @relation(fields: [courseId], references: [id])
+  courseId     Int
+  enrolledAt   DateTime  @default(now())
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  content   String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  course    Course   @relation(fields: [courseId], references: [id])
+  courseId  Int
+}
+
+enum Role {
+  ADMIN
+  INSTRUCTOR
+  STUDENT
+}
