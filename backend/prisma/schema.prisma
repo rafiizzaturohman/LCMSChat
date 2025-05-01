@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  LECTURER
+  STUDENT
+}
+
+model User {
+  id             Int       @id @default(autoincrement())
+  email          String    @unique
+  name           String
+  hashedPassword String
+  role           Role      @default(STUDENT)
+
+  coursesOwned   Course[]  @relation("CourseLecturer") // For lecturers
+  enrollments    Enrollment[]
+  messages       Message[]
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Course {
+  id             Int        @id @default(autoincrement())
+  title          String
+  description    String
+  lecturer       User       @relation("CourseLecturer", fields: [lecturerId], references: [id])
+  lecturerId     Int
+  enrollments    Enrollment[]
+  messages       Message[]
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+}
+
+model Enrollment {
+  id         Int     @id @default(autoincrement())
+  user       User    @relation(fields: [userId], references: [id])
+  userId     Int
+  course     Course  @relation(fields: [courseId], references: [id])
+  courseId   Int
+  enrolledAt DateTime @default(now())
+
+  @@unique([userId, courseId]) // prevent duplicate enrollments
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  content    String
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id])
+  userId     Int
+
+  course     Course   @relation(fields: [courseId], references: [id])
+  courseId   Int
+}
