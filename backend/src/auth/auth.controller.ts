@@ -3,7 +3,7 @@ import { Controller, Get, Param } from '@nestjs/common';
 @Controller('auth')
 export class AuthController {
     @Get()
-    fundAll() {
+    findAll() {
         return []
     }
 
