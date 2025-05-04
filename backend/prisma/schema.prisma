@@ -1,10 +1,10 @@
-generator client {
-  provider = "prisma-client-js"
-}
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
 }
 
 enum Role {
@@ -13,52 +13,141 @@ enum Role {
   STUDENT
 }
 
+enum ResourceType {
+  FILE
+  VIDEO
+  LINK
+}
+
+enum Weekday {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
 model User {
-  id             Int       @id @default(autoincrement())
-  email          String    @unique
-  name           String
-  hashedPassword String
-  role           Role      @default(STUDENT)
+  id            Int             @id @default(autoincrement())
+  email         String          @unique
+  name          String
+  password      String
+  role          Role
+  ownedCourses  Course[]        @relation("CourseOwner")
+  enrollments   Enrollment[]
+  messages      Message[]
+  attendance    Attendance[]
+  submissions   Submission[]
 
-  coursesOwned   Course[]  @relation("CourseLecturer") // For lecturers
-  enrollments    Enrollment[]
-  messages       Message[]
-
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  CourseGrades CourseGrades[]
 }
 
 model Course {
-  id             Int        @id @default(autoincrement())
-  title          String
-  description    String
-  lecturer       User       @relation("CourseLecturer", fields: [lecturerId], references: [id])
-  lecturerId     Int
-  enrollments    Enrollment[]
-  messages       Message[]
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  id            Int             @id @default(autoincrement())
+  title         String
+  description   String?
+  owner         User            @relation("CourseOwner", fields: [ownerId], references: [id])
+  ownerId       Int
+  enrollments   Enrollment[]
+  messages      Message[]
+  courseGrades CourseGrades[]
+  attendances   Attendance[]
+  assignments   Assignment[]
+  resources     Resource[]
+  schedules     Schedule[]
+  createdAt     DateTime        @default(now())
 }
 
-model Enrollment {
-  id         Int     @id @default(autoincrement())
-  user       User    @relation(fields: [userId], references: [id])
-  userId     Int
-  course     Course  @relation(fields: [courseId], references: [id])
+model CourseGrades {
+  id         Int      @id @default(autoincrement())
+  student    User     @relation(fields: [studentId], references: [id])
+  studentId  Int
+  course     Course   @relation(fields: [courseId], references: [id])
   courseId   Int
-  enrolledAt DateTime @default(now())
+  totalGrade Float?
+  status     String?    // e.g., "PASSED", "FAILED"
+  updatedAt  DateTime   @updatedAt
 
-  @@unique([userId, courseId]) // prevent duplicate enrollments
+  @@unique([studentId, courseId])
+}
+
+
+model Enrollment {
+  id         Int       @id @default(autoincrement())
+  student    User      @relation(fields: [studentId], references: [id])
+  studentId  Int
+  course     Course    @relation(fields: [courseId], references: [id])
+  courseId   Int
+  createdAt  DateTime  @default(now())
+
+  @@unique([studentId, courseId])
 }
 
 model Message {
+  id        Int      @id @default(autoincrement())
+  content   String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  course    Course   @relation(fields: [courseId], references: [id])
+  courseId  Int
+}
+
+model Attendance {
   id         Int      @id @default(autoincrement())
-  content    String
-  createdAt  DateTime @default(now())
-
-  user       User     @relation(fields: [userId], references: [id])
-  userId     Int
-
+  student    User     @relation(fields: [studentId], references: [id])
+  studentId  Int
   course     Course   @relation(fields: [courseId], references: [id])
   courseId   Int
+  date       DateTime
+  present    Boolean  @default(false)
+
+  @@unique([studentId, courseId, date])
+}
+
+model Assignment {
+  id            Int           @id @default(autoincrement())
+  title         String
+  description   String?
+  startAt       DateTime      // Task starts
+  dueAt         DateTime      // Task deadline
+  course        Course        @relation(fields: [courseId], references: [id])
+  courseId      Int
+  submissions   Submission[]
+  createdAt     DateTime      @default(now())
+}
+
+model Submission {
+  id            Int           @id @default(autoincrement())
+  content       String
+  submittedAt   DateTime      @default(now())
+  student       User          @relation(fields: [studentId], references: [id])
+  studentId     Int
+  assignment    Assignment    @relation(fields: [assignmentId], references: [id])
+  assignmentId  Int
+  grade         Float?
+
+  @@unique([studentId, assignmentId])
+}
+
+model Resource {
+  id          Int       @id @default(autoincrement())
+  title       String
+  type        ResourceType
+  url         String
+  uploadedAt  DateTime  @default(now())
+  course      Course    @relation(fields: [courseId], references: [id])
+  courseId    Int
+}
+
+model Schedule {
+  id          Int       @id @default(autoincrement())
+  course      Course    @relation(fields: [courseId], references: [id])
+  courseId    Int
+  day         Weekday
+  startTime   DateTime  // Date + Time
+  endTime     DateTime  // Date + Time
+  topic       String?
 }
