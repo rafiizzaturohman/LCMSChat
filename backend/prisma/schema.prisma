@@ -35,7 +35,6 @@ model User {
   name          String
   password      String
   role          Role
-  bio           String?
   avatarUrl     String?
   ownedCourses  Course[]        @relation("CourseOwner")
   enrollments   Enrollment[]
