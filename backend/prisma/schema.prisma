@@ -19,16 +19,6 @@ enum ResourceType {
   LINK
 }
 
-enum Weekday {
-  MONDAY
-  TUESDAY
-  WEDNESDAY
-  THURSDAY
-  FRIDAY
-  SATURDAY
-  SUNDAY
-}
-
 model User {
   id            Int             @id @default(autoincrement())
   email         String          @unique
@@ -162,9 +152,7 @@ model Schedule {
   id          Int       @id @default(autoincrement())
   course      Course    @relation(fields: [courseId], references: [id])
   courseId    Int
-  day         Weekday
-  startTime   DateTime
-  endTime     DateTime
+  date        DateTime
   topic       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
