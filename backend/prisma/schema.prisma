@@ -35,44 +35,54 @@ model User {
   name          String
   password      String
   role          Role
+  bio           String?
+  avatarUrl     String?
   ownedCourses  Course[]        @relation("CourseOwner")
   enrollments   Enrollment[]
   messages      Message[]
   attendance    Attendance[]
   submissions   Submission[]
+  CourseGrades  CourseGrades[]
+  gradedSubmissions Submission[] @relation("Grader")
 
-  CourseGrades CourseGrades[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 }
 
 model Course {
   id            Int             @id @default(autoincrement())
   title         String
   description   String?
+  semester      String?         // Optional semester tracking
   owner         User            @relation("CourseOwner", fields: [ownerId], references: [id])
   ownerId       Int
   enrollments   Enrollment[]
   messages      Message[]
-  courseGrades CourseGrades[]
+  courseGrades  CourseGrades[]
+  gradingPolicy GradingPolicy?
   attendances   Attendance[]
   assignments   Assignment[]
   resources     Resource[]
   schedules     Schedule[]
+
   createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  deletedAt     DateTime?       // Soft delete
 }
 
 model CourseGrades {
-  id         Int      @id @default(autoincrement())
-  student    User     @relation(fields: [studentId], references: [id])
-  studentId  Int
-  course     Course   @relation(fields: [courseId], references: [id])
-  courseId   Int
-  totalGrade Float?
-  status     String?    // e.g., "PASSED", "FAILED"
-  updatedAt  DateTime   @updatedAt
+  id           Int      @id @default(autoincrement())
+  student      User     @relation(fields: [studentId], references: [id])
+  studentId    Int
+  course       Course   @relation(fields: [courseId], references: [id])
+  courseId     Int
+  totalGrade   Float?
+  letterGrade  String?  // A, B, C, D
+  status       String?  // PASSED / FAILED
+  updatedAt    DateTime @updatedAt
 
   @@unique([studentId, courseId])
 }
-
 
 model Enrollment {
   id         Int       @id @default(autoincrement())
@@ -111,23 +121,29 @@ model Assignment {
   id            Int           @id @default(autoincrement())
   title         String
   description   String?
-  startAt       DateTime      // Task starts
-  dueAt         DateTime      // Task deadline
+  startAt       DateTime
+  dueAt         DateTime
   course        Course        @relation(fields: [courseId], references: [id])
   courseId      Int
   submissions   Submission[]
   createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  deletedAt     DateTime?
 }
 
 model Submission {
   id            Int           @id @default(autoincrement())
   content       String
+  fileUrl       String?       // Optional: file upload support
+  feedback      String?
   submittedAt   DateTime      @default(now())
   student       User          @relation(fields: [studentId], references: [id])
   studentId     Int
   assignment    Assignment    @relation(fields: [assignmentId], references: [id])
   assignmentId  Int
   grade         Float?
+  gradedBy      User?         @relation("Grader", fields: [gradedById], references: [id])
+  gradedById    Int?
 
   @@unique([studentId, assignmentId])
 }
@@ -140,6 +156,7 @@ model Resource {
   uploadedAt  DateTime  @default(now())
   course      Course    @relation(fields: [courseId], references: [id])
   courseId    Int
+  deletedAt   DateTime?
 }
 
 model Schedule {
@@ -147,7 +164,22 @@ model Schedule {
   course      Course    @relation(fields: [courseId], references: [id])
   courseId    Int
   day         Weekday
-  startTime   DateTime  // Date + Time
-  endTime     DateTime  // Date + Time
+  startTime   DateTime
+  endTime     DateTime
   topic       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model GradingPolicy {
+  id          Int      @id @default(autoincrement())
+  course      Course   @relation(fields: [courseId], references: [id])
+  courseId    Int      @unique
+  title       String?
+  description String?
+  gradeA      Float
+  gradeB      Float
+  gradeC      Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
