@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
 
@@ -8,8 +8,8 @@ export class AuthController {
     constructor(private readonly authService: AuthService) {}
 
     @Get() // /auth/
-    findAll(@Query('role') role?: 'ADMIN' | 'LECTURER' | 'STUDENT') {
-        return this.authService.findAll()
+    findAll(@Query('role') role?: 'ADMIN' | 'LECTURER' | 'STUDENT') { // /auth?role=ADMIN | LECTURER | STUDENT
+        return this.authService.findAll(role)
     }
 
     @Get(':id') // /auth/{id}
