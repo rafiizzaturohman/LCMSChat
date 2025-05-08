@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
 
@@ -13,8 +13,8 @@ export class AuthController {
     }
 
     @Get(':id') // /auth/{id}
-    findOne(@Param('id') id: string) {
-        return this.authService.findOne(+id)
+    findOne(@Param('id', ParseIntPipe) id: number) {
+        return this.authService.findOne(id)
     }
     
     @Post() // /auth/create
@@ -23,12 +23,12 @@ export class AuthController {
     }
     
     @Patch(':id') // /auth/update/{id}
-    update(@Param('id') id: string, @Body() userUpdate: {name?: string, email?: string, role?: 'ADMIN' | 'LECTURER' | 'STUDENT'}) {
-        return this.authService.update(+id, userUpdate)
+    update(@Param('id', ParseIntPipe) id: number, @Body() userUpdate: {name?: string, email?: string, role?: 'ADMIN' | 'LECTURER' | 'STUDENT'}) {
+        return this.authService.update(id, userUpdate)
     }
 
     @Delete(':id') // /auth/delete/{}
-    delete(@Param('id') id: String) {
-        return this.authService.delete(+id)
+    delete(@Param('id', ParseIntPipe) id: number) {
+        return this.authService.delete(id)
     }
 }
