@@ -12,7 +12,7 @@ import { LoginAuthDto } from './dto/login-auth.dto/login-auth.dto';
 @Injectable()
 export class AuthService {
     constructor(private prisma: PrismaService, private jwtService: JwtService) {}
-    
+
     async findAll(role?: 'ADMIN' | 'LECTURER' | 'STUDENT') {
         try {
           const getAllData = await this.prisma.user.findMany({
@@ -51,12 +51,16 @@ export class AuthService {
         }
 
         const passwordValidation = await bcrypt.compare(auth.password, existingUser.password)
-        
+
         if (!passwordValidation) {
             throw new UnauthorizedException('Invalid email or password')
         }
 
-        const payload = {id: existingUser.id, role: existingUser.role, email: existingUser.email}
+        const payload = {
+            sub: existingUser.id, 
+            role: existingUser.role, 
+            email: existingUser.email
+        }
 
         const jwtToken = this.jwtService.sign(payload)
 

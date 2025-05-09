@@ -9,7 +9,6 @@ import { LoginAuthDto } from './dto/login-auth.dto/login-auth.dto';
 
 @Controller('auth')
 export class AuthController {
-
     constructor(private readonly authService: AuthService) {}
 
     @Get() // /auth/
@@ -47,7 +46,7 @@ export class AuthController {
             }
         }
     }
-    
+
     @Post('register') // /auth/register
     async create(@Body() RegisterAuthDto: RegisterAuthDto) {
         try {
@@ -59,7 +58,7 @@ export class AuthController {
             }
         }
     }
-    
+
     @Patch('update/:id') // /auth/update/{id}
     async update(
         @Param('id', ParseIntPipe) id: number, 
