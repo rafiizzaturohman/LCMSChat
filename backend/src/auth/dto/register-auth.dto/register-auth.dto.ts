@@ -6,6 +6,7 @@ export class RegisterAuthDto {
     email: string;
 
     @IsString()
+    @MinLength(80)
     name: string;
 
     @IsString()
@@ -13,5 +14,5 @@ export class RegisterAuthDto {
     password: string;
 
     @IsEnum(Role)
-    role: string;
+    role: Role;
 }

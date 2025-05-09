@@ -1,4 +1,4 @@
-import { LoginAuthDto } from './login--auth.dto';
+import { LoginAuthDto } from './login-auth.dto';
 
 describe('LoginAuthDto', () => {
   it('should be defined', () => {

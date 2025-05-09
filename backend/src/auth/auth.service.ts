@@ -1,81 +1,183 @@
-import { Injectable } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
+
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+
+import { RegisterAuthDto } from './dto/register-auth.dto/register-auth.dto';
+import { UpdateAuthDto } from './dto/register-auth.dto/update-auth.dto';
+
+import { PrismaService } from 'src/prisma/prisma.service';
+import { LoginAuthDto } from './dto/login-auth.dto/login-auth.dto';
 
 @Injectable()
 export class AuthService {
-    private users = [
-        {
-            'id': 1,
-            'name': 'Rafi Izzaturohman',
-            'email': 'rafiizzaturohman@gmail.com',
-            'role': 'LECTURER',
-        },
-        {
-            'id': 2,
-            'name': 'Alya Putri Maharani',
-            'email': 'alyaapm@gmail.com',
-            'role': 'ADMIN',
-        },
-        {
-            'id': 3,
-            'name': 'M Fadhil Noor Ikhsan',
-            'email': 'dhildii@gmail.com',
-            'role': 'STUDENT',
-        },
-        {
-            'id': 4,
-            'name': 'Adzima Hafidz K',
-            'email': 'jim@gmail.com',
-            'role': 'STUDENT',
-        },
-        {
-            'id': 5,
-            'name': 'Qeysha Yudilla',
-            'email': 'qeyu@gmail.com',
-            'role': 'STUDENT',
-        },
-    ]
+    constructor(private prisma: PrismaService, private jwtService: JwtService) {}
+    
+    async findAll(role?: 'ADMIN' | 'LECTURER' | 'STUDENT') {
+        try {
+          const getAllData = await this.prisma.user.findMany({
+            where: role ? {role} : undefined
+          });
 
-    findAll(role?: 'ADMIN' | 'LECTURER' | 'STUDENT') {
-        if (role) {
-            return this.users.filter(user => user.role === role)
+          return {
+            getAllData
+        };
+        } catch (error) {
+            console.log(error)
+            return error
         }
-        return this.users
     }
 
-    findOne(id: number) {
-        const user = this.users.find(user => user.id === id)
-
-        return user
-    }
-
-    create(user: {name: string, email: string, role: 'ADMIN' | 'LECTURER' | 'STUDENT'}) {
-        const usersByHighestId = [...this.users].sort((a, b) => b.id - a.id)
-
-        const newUser = {
-            id: usersByHighestId[0].id + 1,
-            ...user
+    async findOne(id: number) {
+        try {
+            const getOneData = await this.prisma.user.findUniqueOrThrow({
+                where: {
+                    id: id
+                }
+            })
+            return getOneData;
+        } catch (error) {
+            return error
         }
-
-        this.users.push(newUser)
-        return newUser
     }
 
-    update(id: number, updatedUser: {name?: string, email?: string, role?: 'ADMIN' | 'LECTURER' | 'STUDENT'}) {
-        this.users = this.users.map(user => {
-            if (user.id === id) {
-                return { ...user, ...updatedUser };
-            }
-            return user
+    async login(auth: LoginAuthDto) {
+        const existingUser = await this.prisma.user.findUnique({
+            where: { email: auth.email },
         });
 
-        return this.findOne(id)
+        if (!existingUser) {
+            throw new UnauthorizedException('Invalid email or password')
+        }
+
+        const passwordValidation = await bcrypt.compare(auth.password, existingUser.password)
+        
+        if (!passwordValidation) {
+            throw new UnauthorizedException('Invalid email or password')
+        }
+
+        const payload = {id: existingUser.id, role: existingUser.role, email: existingUser.email}
+
+        const jwtToken = this.jwtService.sign(payload)
+
+        return {
+            access_token: jwtToken,
+            user: {
+                id: existingUser.id,
+                name: existingUser.name,
+                email: existingUser.email,
+                role: existingUser.role,
+            }
+        }
     }
 
-    delete(id: number) {
-        const removeUser = this.findOne(id)
+    async register(auth: RegisterAuthDto) {
+        try {            
+            if (auth.email) {
+                const existingUser = await this.prisma.user.findUnique({
+                    where: { email: auth.email },
+                });
+    
+                if (existingUser) {
+                    return {
+                        message: "Email is already in use by another account",
+                    };
+                }
+            }
 
-        this.users = this.users.filter(user => user.id !== id)
-        
-        return "Data deleted successfully"
+            const hashedPassword = await bcrypt.hash(auth.password, 10);
+
+            const userAuth = await this.prisma.user.create({
+                data: {
+                    email: auth.email,
+                    name: auth.name,
+                    password: hashedPassword,
+                    role: auth.role,
+                },
+                select: {
+                    id: true,
+                    email: true,
+                    name: true,
+                    role: true,
+                    createdAt: true
+                }
+            })
+            return {
+                message: "User created successfully",
+                user: userAuth
+            }
+        } catch (error) {
+            console.log(error)
+            return {
+                message: "Failed to Create User",
+                error
+            }
+        }
+    }
+
+    async update(param: {id: number}, updatedUser: UpdateAuthDto) {
+        try {
+            const getOneData = await this.prisma.user.findUniqueOrThrow({
+                where: {id: param.id}
+            });
+            
+            let hashedPassword: string | undefined;
+
+            if (updatedUser.password) {
+                hashedPassword = await bcrypt.hash(updatedUser.password, 10);
+            }
+
+            if (updatedUser.email) {
+                const existingUser = await this.prisma.user.findUnique({
+                    where: { email: updatedUser.email },
+                });
+    
+                if (existingUser && existingUser.id !== param.id) {
+                    return {
+                        message: "Email is already in use by another account",
+                    };
+                }
+            }
+
+            const userAuth = await this.prisma.user.update({
+                where: {id: param.id},
+                data: {
+                    email: updatedUser.email,
+                    name: updatedUser.name,
+                    password: hashedPassword || getOneData.password,
+                    role: updatedUser.role,
+                },
+                select: {
+                    id: true,
+                    email: true,
+                    name: true,
+                    role: true,
+                    updatedAt: true
+                }
+            })
+
+            return {
+                message: "User updated successfully",
+                user: userAuth
+            }
+
+        } catch (error) {
+            return {
+                message: "Failed to update user data",
+                error: error.message || error
+            }
+        }
+    }
+
+    async delete(param: {id: number}) {
+        try {
+            const getOneData = await this.prisma.user.findUniqueOrThrow({
+                where: {id: param.id}
+            });
+
+            await this.prisma.user.delete({where: getOneData})
+        } catch (error) {
+            
+        }
     }
 }
