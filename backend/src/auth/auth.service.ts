@@ -144,7 +144,7 @@ export class AuthService {
                 data: {
                     email: updatedUser.email,
                     name: updatedUser.name,
-                    password: hashedPassword || getOneData.password,
+                    password: hashedPassword,
                     role: updatedUser.role,
                 },
                 select: {

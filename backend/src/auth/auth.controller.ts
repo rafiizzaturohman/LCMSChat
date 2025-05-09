@@ -36,7 +36,7 @@ export class AuthController {
         }
     }
 
-    @Post('login')
+    @Post('login') //auth/login
     async post(@Body() LoginAuthDto: LoginAuthDto) {
         try {
             return this.authService.login(LoginAuthDto)
