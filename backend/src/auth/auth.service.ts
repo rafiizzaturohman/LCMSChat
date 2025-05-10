@@ -8,6 +8,13 @@ import { UpdateAuthDto } from "./dto/register-auth.dto/update-auth.dto";
 
 import { PrismaService } from "src/prisma/prisma.service";
 import { LoginAuthDto } from "./dto/login-auth.dto/login-auth.dto";
+import { Role } from "@prisma/client";
+
+interface JwtPayload {
+  sub: number;
+  email: string;
+  role: Role;
+}
 
 @Injectable()
 export class AuthService {
@@ -62,7 +69,7 @@ export class AuthService {
 			throw new UnauthorizedException("Invalid email or password");
 		}
 
-		const payload = {
+		const payload: JwtPayload = {
 			sub: existingUser.id,
 			role: existingUser.role,
 			email: existingUser.email,

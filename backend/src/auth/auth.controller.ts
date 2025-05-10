@@ -3,11 +3,13 @@ import {
 	Controller,
 	Delete,
 	Get,
+	HttpCode,
 	Param,
 	ParseIntPipe,
 	Patch,
 	Post,
 	Query,
+    Res,
 } from "@nestjs/common";
 
 import { AuthService } from "./auth.service";
@@ -15,6 +17,8 @@ import { AuthService } from "./auth.service";
 import { LoginAuthDto } from "./dto/login-auth.dto/login-auth.dto";
 import { UpdateAuthDto } from "./dto/register-auth.dto/update-auth.dto";
 import { RegisterAuthDto } from "./dto/register-auth.dto/register-auth.dto";
+import { Response } from "express";
+import { getCookieOptions } from "src/utils/getCookie";
 
 @Controller("auth")
 export class AuthController {
@@ -33,7 +37,7 @@ export class AuthController {
 		}
 	}
 
-	@Get(":id") // /auth/{id}
+	@Get("profile/:id") // /auth/profile/{id}
 	async findOne(@Param("id", ParseIntPipe) id: number) {
 		try {
 			return this.authService.findOne(id);
@@ -45,10 +49,17 @@ export class AuthController {
 		}
 	}
 
-	@Post("login") //auth/login
-	async post(@Body() LoginAuthDto: LoginAuthDto) {
+	@Post("login") // /auth/login
+	async post(@Body() LoginAuthDto: LoginAuthDto, @Res({passthrough: true}) res: Response) {
 		try {
-			return this.authService.login(LoginAuthDto);
+            const loginAuth = this.authService.login(LoginAuthDto)
+
+            res.cookie('access_token', (await loginAuth).access_token, getCookieOptions())
+
+            return {
+                message: "Success to log in",
+                user: (await loginAuth).user
+            }
 		} catch (error) {
 			return {
 				message: "Failed to log in",
@@ -56,6 +67,24 @@ export class AuthController {
 			};
 		}
 	}
+
+    @Post("logout") // /auth/logout
+    @HttpCode(200)
+	async logout(@Res({passthrough: true}) res: Response) {
+		try {
+            res.clearCookie('access_token')
+
+            return {
+                message: "Logged out successfully"
+            }
+		} catch (error) {
+			return {
+				message: "Failed to log in",
+				error: error.message || error,
+			};
+		}
+	}
+
 
 	@Post("register") // /auth/register
 	async create(@Body() RegisterAuthDto: RegisterAuthDto) {
