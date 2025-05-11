@@ -11,9 +11,9 @@ import { LoginAuthDto } from "./dto/login-auth.dto/login-auth.dto";
 import { Role } from "@prisma/client";
 
 interface JwtPayload {
-  sub: number;
-  email: string;
-  role: Role;
+	sub: number;
+	email: string;
+	role: Role;
 }
 
 @Injectable()

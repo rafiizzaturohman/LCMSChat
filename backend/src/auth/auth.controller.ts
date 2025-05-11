@@ -9,7 +9,7 @@ import {
 	Patch,
 	Post,
 	Query,
-    Res,
+	Res,
 } from "@nestjs/common";
 
 import { AuthService } from "./auth.service";
@@ -50,16 +50,19 @@ export class AuthController {
 	}
 
 	@Post("login") // /auth/login
-	async post(@Body() LoginAuthDto: LoginAuthDto, @Res({passthrough: true}) res: Response) {
+	async post(
+		@Body() LoginAuthDto: LoginAuthDto,
+		@Res({ passthrough: true }) res: Response,
+	) {
 		try {
-            const loginAuth = this.authService.login(LoginAuthDto)
+			const loginAuth = await this.authService.login(LoginAuthDto);
 
-            res.cookie('access_token', (await loginAuth).access_token, getCookieOptions())
+			res.cookie("access_token", loginAuth.access_token, getCookieOptions());
 
-            return {
-                message: "Success to log in",
-                user: (await loginAuth).user
-            }
+			return {
+				message: "Success to log in",
+				user: loginAuth.user,
+			};
 		} catch (error) {
 			return {
 				message: "Failed to log in",
@@ -68,15 +71,15 @@ export class AuthController {
 		}
 	}
 
-    @Post("logout") // /auth/logout
-    @HttpCode(200)
-	async logout(@Res({passthrough: true}) res: Response) {
+	@Post("logout") // /auth/logout
+	@HttpCode(200)
+	async logout(@Res({ passthrough: true }) res: Response) {
 		try {
-            res.clearCookie('access_token')
+			res.clearCookie("access_token");
 
-            return {
-                message: "Logged out successfully"
-            }
+			return {
+				message: "Logged out successfully",
+			};
 		} catch (error) {
 			return {
 				message: "Failed to log in",
@@ -84,7 +87,6 @@ export class AuthController {
 			};
 		}
 	}
-
 
 	@Post("register") // /auth/register
 	async create(@Body() RegisterAuthDto: RegisterAuthDto) {
