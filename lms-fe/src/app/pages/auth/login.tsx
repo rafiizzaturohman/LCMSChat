@@ -19,11 +19,11 @@ const LoginPage = () => {
       console.log(loggedIn);
 
       if (userRole === "ADMIN") {
-        router?.push("/pages/dashboard/adminPage");
+        router.push("/pages/dashboard/adminPage");
       } else if (userRole === "LECTURER") {
-        router?.push("/pages/dashboard/lecturerPage");
+        router.push("/pages/dashboard/lecturerPage");
       } else {
-        router?.push("/pages/dashboard/studentPage");
+        router.push("/pages/dashboard/studentPage");
       }
     } catch (error) {
       console.error(error);
