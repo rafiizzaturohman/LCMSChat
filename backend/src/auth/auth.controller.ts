@@ -61,7 +61,6 @@ export class AuthController {
 
 			return {
 				message: "Success to log in",
-				user: loginAuth.user,
 			};
 		} catch (error) {
 			return {

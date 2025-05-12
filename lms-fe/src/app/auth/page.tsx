@@ -9,7 +9,9 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const router = useRouter();
 
-  const handleLogin = async () => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
     try {
       const loggedIn = await loginUser(email, password);
       const userRole = loggedIn.user.role;
@@ -19,11 +21,11 @@ const LoginPage = () => {
       console.log(loggedIn);
 
       if (userRole === "ADMIN") {
-        router.push("/pages/dashboard/adminPage");
+        router.push("/dashboard/adminPage");
       } else if (userRole === "LECTURER") {
-        router.push("/pages/dashboard/lecturerPage");
+        router.push("/dashboard/lecturerPage");
       } else {
-        router.push("/pages/dashboard/studentPage");
+        router.push("/dashboard/studentPage");
       }
     } catch (error) {
       console.error(error);
@@ -35,7 +37,11 @@ const LoginPage = () => {
       <div className="bg-white p-8 rounded-md shadow-md flex flex-col w-full max-w-sm">
         <div></div>
 
-        <div className="flex flex-col space-y-3">
+        <form
+          className="flex flex-col space-y-3"
+          onSubmit={handleLogin}
+          method="POST"
+        >
           <input
             className="p-2 rounded border border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
             placeholder="Email"
@@ -60,12 +66,11 @@ const LoginPage = () => {
 
           <button
             className="cursor-pointer text-white bg-blue-800 font-semibold tracking-wider"
-            onClick={handleLogin}
             type="submit"
           >
             Log In
           </button>
-        </div>
+        </form>
       </div>
     </div>
   );
