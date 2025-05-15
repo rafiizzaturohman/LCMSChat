@@ -17,8 +17,6 @@ const LoginPage = () => {
       const loggedIn = await loginUser(email, password);
       const userRole = loggedIn.data.role;
 
-      console.log(loggedIn);
-
       if (userRole === "ADMIN") {
         router.push("/dashboard/adminPage");
       } else if (userRole === "LECTURER") {
