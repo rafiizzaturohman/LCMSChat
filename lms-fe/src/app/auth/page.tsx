@@ -1,7 +1,6 @@
 "use client";
 
 import { loginUser } from "@/app/utils/api";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -30,8 +29,8 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-700 max-w-7xl flex items-center justify-center">
-      <div className="bg-white  p-6 md:px-8 md:py-6 rounded-[2px] mx-10">
+    <div className="min-h-screen bg-gray-700 flex items-center justify-center">
+      <div className="bg-white p-6 md:px-8 md:py-6 rounded-[2px] mx-10">
         <div className="flex md:flex-row flex-col w-full md:max-w-md items-center justify-center md:space-x-12 space-y-6 md:space-y-0">
           {/* Image container */}
           <div className="flex flex-col justify-center items-center w-full md:w-auto space-y-2">
