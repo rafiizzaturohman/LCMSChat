@@ -1,6 +1,6 @@
 "use client";
 
-import { logoutUser } from "@/app/utils/api";
+import { logoutUser } from "@/lib/utils/api";
 import { useRouter } from "next/navigation";
 
 const AdminPage = () => {

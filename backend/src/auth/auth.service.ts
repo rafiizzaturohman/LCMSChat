@@ -1,6 +1,9 @@
 import * as bcrypt from "bcrypt";
-
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import {
+	Injectable,
+	UnauthorizedException,
+	BadRequestException,
+} from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 
 import { RegisterAuthDto } from "./dto/register-auth.dto/register-auth.dto";
@@ -23,17 +26,15 @@ export class AuthService {
 		private jwtService: JwtService,
 	) {}
 
-	async findAll(role?: "ADMIN" | "LECTURER" | "STUDENT") {
+	async findAll(role?: Role) {
 		try {
 			const getAllData = await this.prisma.user.findMany({
 				where: role ? { role } : undefined,
 			});
 
-			return {
-				getAllData,
-			};
+			return { getAllData };
 		} catch (error) {
-			console.log(error);
+			console.error(error);
 			return error;
 		}
 	}
@@ -41,9 +42,7 @@ export class AuthService {
 	async findOne(id: number) {
 		try {
 			const getOneData = await this.prisma.user.findUniqueOrThrow({
-				where: {
-					id: id,
-				},
+				where: { id },
 			});
 			return getOneData;
 		} catch (error) {
@@ -60,49 +59,86 @@ export class AuthService {
 			throw new UnauthorizedException("Invalid email or password");
 		}
 
-		const passwordValidation = await bcrypt.compare(
+		const passwordValid = await bcrypt.compare(
 			auth.password,
 			existingUser.password,
 		);
 
-		if (!passwordValidation) {
+		if (!passwordValid) {
 			throw new UnauthorizedException("Invalid email or password");
 		}
 
 		const payload: JwtPayload = {
 			sub: existingUser.id,
-			role: existingUser.role,
 			email: existingUser.email,
+			role: existingUser.role,
 		};
 
 		const jwtToken = this.jwtService.sign(payload);
 
-		return {
-			access_token: jwtToken,
-			user: {
-				id: existingUser.id,
-				name: existingUser.name,
-				email: existingUser.email,
-				role: existingUser.role,
-			},
-		};
+		if (existingUser.role === "ADMIN") {
+			return {
+				access_token: jwtToken,
+				user: {
+					id: existingUser.id,
+					name: existingUser.name,
+					email: existingUser.email,
+					role: existingUser.role,
+					nip: existingUser.nip,
+				},
+			};
+		} else if (existingUser.role === "LECTURER") {
+			return {
+				access_token: jwtToken,
+				user: {
+					id: existingUser.id,
+					name: existingUser.name,
+					email: existingUser.email,
+					role: existingUser.role,
+					nidn: existingUser.nidn,
+				},
+			};
+		} else {
+			return {
+				access_token: jwtToken,
+				user: {
+					id: existingUser.id,
+					name: existingUser.name,
+					email: existingUser.email,
+					role: existingUser.role,
+					nim: existingUser.nim,
+				},
+			};
+		}
 	}
 
 	async register(auth: RegisterAuthDto) {
 		try {
-			if (auth.email) {
-				const existingUser = await this.prisma.user.findUnique({
-					where: { email: auth.email },
-				});
+			const existingUser = await this.prisma.user.findUnique({
+				where: { email: auth.email },
+			});
 
-				if (existingUser) {
-					return {
-						message: "Email is already in use by another account",
-					};
-				}
+			if (existingUser) {
+				return { message: "Email is already in use by another account" };
 			}
 
 			const hashedPassword = await bcrypt.hash(auth.password, 10);
+
+			const roleData: { nim?: string; nidn?: string; nip?: string } = {};
+
+			if (auth.role === "STUDENT") {
+				if (!auth.nim)
+					throw new BadRequestException("NIM is required for students");
+				roleData.nim = auth.nim;
+			} else if (auth.role === "LECTURER") {
+				if (!auth.nidn)
+					throw new BadRequestException("NIDN is required for lecturers");
+				roleData.nidn = auth.nidn;
+			} else if (auth.role === "ADMIN") {
+				if (!auth.nip)
+					throw new BadRequestException("NIP is required for admins");
+				roleData.nip = auth.nip;
+			}
 
 			const userAuth = await this.prisma.user.create({
 				data: {
@@ -110,24 +146,28 @@ export class AuthService {
 					name: auth.name,
 					password: hashedPassword,
 					role: auth.role,
+					avatarUrl: auth.avatar ?? null,
+					...roleData,
 				},
 				select: {
 					id: true,
 					email: true,
 					name: true,
 					role: true,
+					avatarUrl: true,
 					createdAt: true,
 				},
 			});
+
 			return {
 				message: "User created successfully",
 				user: userAuth,
 			};
 		} catch (error) {
-			console.log(error);
+			console.error(error);
 			return {
-				message: "Failed to Create User",
-				error,
+				message: "Failed to create user",
+				error: error.message || error,
 			};
 		}
 	}
@@ -139,7 +179,6 @@ export class AuthService {
 			});
 
 			let hashedPassword: string | undefined;
-
 			if (updatedUser.password) {
 				hashedPassword = await bcrypt.hash(updatedUser.password, 10);
 			}
@@ -156,6 +195,30 @@ export class AuthService {
 				}
 			}
 
+			const roleData: {
+				nim?: string | null;
+				nidn?: string | null;
+				nip?: string | null;
+			} = {
+				nim: getOneData.nim || updatedUser.nim || null,
+				nidn: getOneData.nidn || updatedUser.nidn || null,
+				nip: getOneData.nip || updatedUser.nip || null,
+			};
+
+			if (updatedUser.role === "STUDENT") {
+				if (!updatedUser.nim)
+					throw new BadRequestException("NIM is required for students");
+				roleData.nim = updatedUser.nim;
+			} else if (updatedUser.role === "LECTURER") {
+				if (!updatedUser.nidn)
+					throw new BadRequestException("NIDN is required for lecturers");
+				roleData.nidn = updatedUser.nidn;
+			} else if (updatedUser.role === "ADMIN") {
+				if (!updatedUser.nip)
+					throw new BadRequestException("NIP is required for admins");
+				roleData.nip = updatedUser.nip;
+			}
+
 			const userAuth = await this.prisma.user.update({
 				where: { id: param.id },
 				data: {
@@ -164,6 +227,7 @@ export class AuthService {
 					password: hashedPassword || getOneData.password,
 					role: updatedUser.role,
 					avatarUrl: updatedUser.avatar ?? getOneData.avatarUrl,
+					...roleData,
 				},
 				select: {
 					id: true,
@@ -193,7 +257,18 @@ export class AuthService {
 				where: { id: param.id },
 			});
 
-			await this.prisma.user.delete({ where: getOneData });
-		} catch (error) {}
+			await this.prisma.user.delete({
+				where: { id: getOneData.id },
+			});
+
+			return {
+				message: "User deleted successfully",
+			};
+		} catch (error) {
+			return {
+				message: "Failed to delete user",
+				error: error.message || error,
+			};
+		}
 	}
 }
