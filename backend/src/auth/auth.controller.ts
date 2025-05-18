@@ -62,11 +62,13 @@ export class AuthController {
 			res.cookie("access_token", loginAuth.access_token, getCookieOptions());
 
 			return {
+				success: true,
 				message: "Success to log in",
 				data: loginAuth.user,
 			};
 		} catch (error) {
 			return {
+				success: false,
 				message: "Failed to log in",
 				error: error.message || error,
 			};

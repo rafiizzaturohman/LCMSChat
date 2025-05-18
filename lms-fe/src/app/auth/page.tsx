@@ -14,6 +14,7 @@ const LoginPage = () => {
 
     try {
       const loggedIn = await loginUser(email, password);
+
       const userRole = loggedIn.data.role;
 
       if (userRole === "ADMIN") {
@@ -37,7 +38,7 @@ const LoginPage = () => {
             <img
               className="w-32 md:w-40"
               src="/image/mainLogo.png"
-              alt="Picture of School Logo"
+              alt="Logo of School"
             />
 
             <p className="uppercase text-md md:text-xs text-center">
@@ -61,7 +62,6 @@ const LoginPage = () => {
               autoComplete="off"
               required
             />
-
             <input
               className="w-full p-1 border-b-2 border-gray-200 focus:outline-none hover:border-gray-400 focus:border-b-2 focus:border-gray-700 transition ease-in-out text-sm"
               placeholder="Password"

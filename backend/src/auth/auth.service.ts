@@ -17,6 +17,9 @@ interface JwtPayload {
 	sub: number;
 	email: string;
 	role: Role;
+	nip: string | null;
+	nim: string | null;
+	nidn: string | null;
 }
 
 @Injectable()
@@ -68,15 +71,18 @@ export class AuthService {
 			throw new UnauthorizedException("Invalid email or password");
 		}
 
-		const payload: JwtPayload = {
-			sub: existingUser.id,
-			email: existingUser.email,
-			role: existingUser.role,
-		};
-
-		const jwtToken = this.jwtService.sign(payload);
-
 		if (existingUser.role === "ADMIN") {
+			const payload: JwtPayload = {
+				sub: existingUser.id,
+				email: existingUser.email,
+				role: existingUser.role,
+				nip: existingUser.nip,
+				nim: null,
+				nidn: null,
+			};
+
+			const jwtToken = this.jwtService.sign(payload);
+
 			return {
 				access_token: jwtToken,
 				user: {
@@ -88,6 +94,17 @@ export class AuthService {
 				},
 			};
 		} else if (existingUser.role === "LECTURER") {
+			const payload: JwtPayload = {
+				sub: existingUser.id,
+				email: existingUser.email,
+				role: existingUser.role,
+				nip: null,
+				nim: null,
+				nidn: existingUser.nidn,
+			};
+
+			const jwtToken = this.jwtService.sign(payload);
+
 			return {
 				access_token: jwtToken,
 				user: {
@@ -99,6 +116,17 @@ export class AuthService {
 				},
 			};
 		} else {
+			const payload: JwtPayload = {
+				sub: existingUser.id,
+				email: existingUser.email,
+				role: existingUser.role,
+				nip: null,
+				nim: existingUser.nim,
+				nidn: null,
+			};
+
+			const jwtToken = this.jwtService.sign(payload);
+
 			return {
 				access_token: jwtToken,
 				user: {
@@ -200,9 +228,9 @@ export class AuthService {
 				nidn?: string | null;
 				nip?: string | null;
 			} = {
-				nim: getOneData.nim || updatedUser.nim || null,
-				nidn: getOneData.nidn || updatedUser.nidn || null,
-				nip: getOneData.nip || updatedUser.nip || null,
+				nim: getOneData.nim || updatedUser.nim,
+				nidn: getOneData.nidn || updatedUser.nidn,
+				nip: getOneData.nip || updatedUser.nip,
 			};
 
 			if (updatedUser.role === "STUDENT") {
