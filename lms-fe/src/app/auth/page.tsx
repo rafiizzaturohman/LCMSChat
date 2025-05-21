@@ -30,9 +30,9 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-700 flex items-center justify-center">
+    <div className="w-auto min-h-screen bg-gray-700 flex items-center justify-center">
       <div className="bg-white p-6 md:px-8 md:py-6 rounded-[2px] mx-10">
-        <div className="flex md:flex-row flex-col w-full md:max-w-md items-center justify-center md:space-x-12 space-y-6 md:space-y-0">
+        <div className="flex md:flex-row flex-col w-auto items-center justify-center space-y-6 md:max-w-l md:justify-evenly md:space-x-8 md:space-y-0">
           {/* Image container */}
           <div className="flex flex-col justify-center items-center w-full md:w-auto space-y-2">
             <img
@@ -41,7 +41,7 @@ const LoginPage = () => {
               alt="Logo of School"
             />
 
-            <p className="uppercase text-md md:text-xs text-center">
+            <p className="uppercase text-sm md:text-md text-center">
               <strong>
                 Learning Management System
                 <br />
